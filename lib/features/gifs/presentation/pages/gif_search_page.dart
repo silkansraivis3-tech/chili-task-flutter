@@ -13,6 +13,12 @@ class GifSearchPage extends StatefulWidget {
   State<GifSearchPage> createState() => _GifSearchPageState();
 }
 class _GifSearchPageState extends State<GifSearchPage> {
+  final ScrollController _scrollController = ScrollController();
+  String _currentQuery = '';
+  int _offset = 0;
+  final int _limit = 25;
+  bool _isLoadingMore = false;
+  bool _hasMoreResults = true;
   final TextEditingController _searchController = TextEditingController();
   Timer? _debounceTimer;
   late final GifRepository _repository;
@@ -25,11 +31,18 @@ class _GifSearchPageState extends State<GifSearchPage> {
     final dio = Dio();
     final api = GiphyApi(dio);
     _repository = GifRepository(api);
+    _scrollController.addListener(() {
+      final isNearBottom = _scrollController.position.pixels >= _scrollController.position.maxScrollExtent - 300;
+      if(isNearBottom) {
+        _loadMoreGifs();
+      }
+    });
 }
   @override
   void dispose() {
     _searchController.dispose();
     _debounceTimer?.cancel();
+    _scrollController.dispose();
     super.dispose();
   }
   void _onSearchChanged(String value) {
@@ -42,12 +55,18 @@ class _GifSearchPageState extends State<GifSearchPage> {
     final cleanQuery = query.trim();
     if (cleanQuery.isEmpty) {
       setState(() {
+        _currentQuery = '';
         _gifs = [];
+        _offset = 0;
+        _hasMoreResults = true;
         _errorMessage = null;
       });
       return;
   }
   setState(() {
+    _currentQuery = cleanQuery;
+    _offset = 0;
+    _hasMoreResults = true;
     _isLoading = true;
     _errorMessage = null;
   });
@@ -56,6 +75,8 @@ class _GifSearchPageState extends State<GifSearchPage> {
     if(!mounted) return;
     setState(() {
       _gifs = gifs;
+      _offset = gifs.length;
+      _hasMoreResults = gifs.length == _limit;
       _isLoading = false;
     });
   } catch (error) {
@@ -65,6 +86,34 @@ class _GifSearchPageState extends State<GifSearchPage> {
       _errorMessage = error.toString();
     });
   }
+  }
+  Future<void> _loadMoreGifs() async {
+    if (_currentQuery.isEmpty || _isLoading || _isLoadingMore || !_hasMoreResults) {
+      return;
+    }
+    setState(() {
+      _isLoadingMore = true;
+    });
+    try {
+      final newGifs = await _repository.searchGifs(
+        query: _currentQuery,
+        limit: _limit,
+        offset: _offset,
+      );
+      if(!mounted) return;
+      setState(() {
+        _gifs.addAll(newGifs);
+        _offset += newGifs.length;
+        _hasMoreResults = newGifs.length == _limit;
+        _isLoadingMore = false;
+      });
+    } catch (error) {
+      if(!mounted) return;
+      setState(() {
+        _isLoadingMore = false;
+        _errorMessage = error.toString();
+      });
+    }
   }
   @override
   Widget build(BuildContext context) {
@@ -115,6 +164,7 @@ class _GifSearchPageState extends State<GifSearchPage> {
       );
     }
     return GridView.builder(
+      controller: _scrollController,
       itemCount: _gifs.length,
       gridDelegate: const SliverGridDelegateWithMaxCrossAxisExtent(maxCrossAxisExtent: 180, mainAxisSpacing: 8, crossAxisSpacing: 8,),
       itemBuilder:(context, index) {
