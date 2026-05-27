@@ -18,7 +18,7 @@ This project using :
 Flutter 3.44.0
 Dart 3.12.0
 ```
-# Platforms tested
+## Platforms tested
  
  - Android (Pixel 7)
  - iOS Simulator (Iphone 17)
@@ -27,7 +27,7 @@ Dart 3.12.0
  ## Setup
  1. Clone the repo :
  ```bash
- git clone YOUR_REPO_URL
+ git clone https://github.com/silkansraivis3-tech/chili-task-flutter.git
  cd chili-task-flutter
  ```
  2. Install dependencies :
@@ -54,6 +54,7 @@ Dart 3.12.0
 
  ## Structure
  Project uses a simple structure :
+ ```text
     lib/
         core/
             config/
@@ -71,7 +72,7 @@ Dart 3.12.0
                     pages/
                         gif_search_page.dart
                         gif_detail_page.dart
-
+```
 ## Architecture explanation
 
 App keeps code separated in a way:
