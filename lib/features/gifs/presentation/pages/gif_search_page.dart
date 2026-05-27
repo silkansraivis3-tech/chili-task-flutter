@@ -5,6 +5,7 @@ import 'package:dio/dio.dart';
 import '../../data/gif_repository.dart';
 import '../../data/giphy_api.dart';
 import '../../data/models/gif_item.dart';
+import 'gif_detail_page.dart';
 
 class GifSearchPage extends StatefulWidget {
   const GifSearchPage({super.key});
@@ -169,16 +170,30 @@ class _GifSearchPageState extends State<GifSearchPage> {
       gridDelegate: const SliverGridDelegateWithMaxCrossAxisExtent(maxCrossAxisExtent: 180, mainAxisSpacing: 8, crossAxisSpacing: 8,),
       itemBuilder:(context, index) {
         final gif = _gifs[index];
-        return ClipRRect(
-          borderRadius: BorderRadius.circular(12),
-          child: CachedNetworkImage(
-            imageUrl: gif.previewUrl,
-            fit: BoxFit.cover,
-            placeholder: (context,url) {
-              return const Center(
-                child: CircularProgressIndicator() ,
+        return GestureDetector(
+          onTap: () {
+            Navigator.push(
+              context,
+              MaterialPageRoute(builder: (context) => GifDetailPage(gif: gif),
+              ),
+            );
+          },
+          child: ClipRRect(
+            borderRadius: BorderRadius.circular(12),
+            child: CachedNetworkImage(
+              imageUrl: gif.previewUrl,
+              fit: BoxFit.cover,
+              placeholder: (context, url) {
+                return const Center(
+                  child: CircularProgressIndicator(),
                 );
-            },
+              },
+              errorWidget: (context, url, error) {
+                return const Center(
+                  child: Icon(Icons.broken_image),
+                );
+              },
+            ),
           ),
         );
       },
